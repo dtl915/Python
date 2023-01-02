@@ -304,6 +304,7 @@ def top_score(current=None):
         f.close()
 
 
+
 def main():
     global information, colors
     pygame.init()
@@ -319,6 +320,10 @@ def main():
     orange=pygame.image.load('orange.png').convert()
     green=pygame.image.load('green.png').convert()
     purple=pygame.image.load('purple.png').convert()
+
+    grey=pygame.transform.scale(pygame.image.load('grey.png').convert_alpha(),(information['screen_x'],information['screen_y']))
+    grey.set_alpha(200)
+    
 
 
     colors=[green, red, lightblue, yellow, darkblue,orange, purple]
@@ -372,12 +377,12 @@ def main():
                 
                 elif event.key == K_RIGHT:
                     current_block.column+=1
-                    if not validity(current_block,grid):
+                    if not validity(current_block,grid) or next_piece:
                         current_block.column-=1
                 
                 elif event.key == K_LEFT:
                     current_block.column-=1
-                    if not validity(current_block,grid):
+                    if not validity(current_block,grid) or next_piece:
                         current_block.column+=1
 
                 elif event.key == K_UP:
@@ -393,6 +398,22 @@ def main():
                             break
                         else:
                             score +=2
+                elif event.key== K_ESCAPE:
+                    surface.blit(grey,(0,0))
+
+                    font = pygame.font.SysFont('comicsans', 50)
+                    label = font.render('Press Any Key To Continue', 1, (255, 255, 255))
+
+                    surface.blit(label, (information['screen_x'] / 2 - (label.get_width() / 2), information['screen_y']/2))
+                    pygame.display.update()
+                    run=True
+                    while run:
+                        for event in pygame.event.get():
+                            if event.type==KEYDOWN:
+                                run=False    
+
+
+
             
             if event.type == KEYUP:
                 if event.key==K_DOWN:
