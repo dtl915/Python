@@ -42,3 +42,5 @@ lightblue.png
 .gitignore
 darkblue.png
 grey.png
+Tetris.py
+dist.zip
