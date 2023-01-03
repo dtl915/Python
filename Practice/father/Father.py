@@ -1,2 +1,0 @@
-def father():
-    print('father')
