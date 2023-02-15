@@ -121,7 +121,7 @@ tetris_shapes = [S, Z, I, O, J, L, T]
 
 information={'screen_x':700, 'screen_y':800, 'horizontal_block': 10, 'vertical_block': 20 , 'block_size': 30,'block_speed':500,'board_x':300,'board_y':600} #board will be a rectangle from (100,300) to (400,900)
 
-top_left_x=100#(information['screen_x']-information['board_x'])//2 #top left of the board
+top_left_x=150#(information['screen_x']-information['board_x'])//2 #top left of the board
 
 top_left_y=100#information['screen_y']-information['board_y']
 
@@ -164,7 +164,7 @@ def validity(shape,grid): #True if is a valid pos
 
     for pos in formatted:
         if pos not in accepted_pos:
-            if pos[1] > -1:
+            if pos[1] > -1 or not( pos[0] <= information['horizontal_block']-1 and pos[0]>=0):
                 return False
     return True
 
@@ -246,31 +246,55 @@ def score_count(row,level):
 
 
 def draw_window(surface, grid, score=0, last_score = 0, level = 0):
-    surface.fill((0, 0, 0))
-
+    surface.fill((150, 150, 150))
     pygame.font.init()
-    font = pygame.font.SysFont('comicsans', 60)
-    label = font.render('Tetris', 1, (255, 255, 255))
+    # font = pygame.font.SysFont('comicsans', 60)
+    # label = font.render('Tetris', 1, (255, 255, 255))
 
-    surface.blit(label, (top_left_x + information['board_x'] / 2 - (label.get_width() / 2), top_left_y//2-30))
+    # surface.blit(label, (top_left_x + information['board_x'] / 2 - (label.get_width() / 2), top_left_y//2-30))
 
     # current score
-    font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Score: ' + str(score), 1, (255,255,255))
 
     sx = top_left_x + information['board_x'] 
     sy = top_left_y + information['board_y'] /2 - 100
 
-    surface.blit(label, (sx+30 , sy + 160))
-    # last score
-    label = font.render('High Score: ' + str(last_score), 1, (255,255,255))
-    surface.blit(label, (sx+30 , sy + 100))
+    font = pygame.font.SysFont('comicsans', 30)
 
     label=font.render('Level: '+str(level), 1 ,(255, 255, 255))
-    surface.blit(label, (sx+30, sy+40))
+    surface.blit(label, (sx+30, sy-100))
+    pygame.draw.rect(surface, (100,100,100), (sx+15, sy-110, 200,70),3)
+
+    # last score
+
+    label = font.render('High Score:',1,(255,255,255))
+    surface.blit(label,(sx+30, sy-10))
+
+
+    label = font.render(str(last_score), 1, (255,255,255))
+    surface.blit(label, (sx+50 , sy + 40))
+    pygame.draw.rect(surface, (100,100,100), (sx+15, sy-20, 200,110),3)
+
+
+    label = font.render('Score: ' , 1, (255,255,255))
+    surface.blit(label, (sx+30 , sy + 110))
+
+
+
+    label = font.render(str(score), 1, (255,255,255))
+    surface.blit(label, (sx+50, sy+150))
+    pygame.draw.rect(surface, (100,100,100), (sx+15, sy+100, 200, 110),3)
+    
+
+
+
+    #pygame.draw.rect(surface , (128,128,128), (sx+15, sy+15, 200,110),3)
+
+
     sx = top_left_x - 200
     sy = top_left_y + 200
 
+
+    pygame.draw.rect(surface, (0, 0, 0), (top_left_x+5, top_left_y+5, information['board_x']-10, information['board_y']-10))
 
 
     for i in range(len(grid)):
@@ -302,7 +326,27 @@ def top_score(current=None):
         f=open('scores.txt','w',encoding='utf-8')
         f.write(str(current))
         f.close()
+def pause(text,surface):
 
+    grey=pygame.transform.scale(pygame.image.load('grey.png').convert_alpha(),(information['screen_x'],information['screen_y']))
+    grey.set_alpha(200)
+    
+
+    surface.blit(grey,(0,0))
+
+    font = pygame.font.SysFont('comicsans', 50)
+    label = font.render(text, 1, (255, 255, 255))
+
+    surface.blit(label, (information['screen_x'] / 2 - (label.get_width() / 2), information['screen_y']/2-100))
+    pygame.display.update()
+    run=True
+    while run:
+        for event in pygame.event.get():
+            if event.type==QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type==KEYDOWN:
+                run=False    
 
 
 def main():
@@ -321,133 +365,118 @@ def main():
     green=pygame.image.load('green.png').convert()
     purple=pygame.image.load('purple.png').convert()
 
-    grey=pygame.transform.scale(pygame.image.load('grey.png').convert_alpha(),(information['screen_x'],information['screen_y']))
-    grey.set_alpha(200)
-    
-
 
     colors=[green, red, lightblue, yellow, darkblue,orange, purple]
 
     for i in range(len(colors)):
         colors[i]=pygame.transform.scale(colors[i],(information['block_size'],information['block_size']))
-
-
-
     
-    locked_pos={} #fixed blocks, dictionary, (R,G,B)
-    next_piece=False 
-    current_block=get_shape()
-    next_block=get_shape()
-    
-    clock=pygame.time.Clock()
-    score=0
-    fall_time=0
-    pygame.key.set_repeat(150)
-    level=1
-    cleared=0
+    pause('Press Any Key To Start',surface)
 
     while True:
-        grid=create_grid(locked_pos)
-
-        fall_time+=clock.get_rawtime()
-        clock.tick()
-
-        if fall_time > information['block_speed']:
-
-            fall_time = 0
-            current_block.row += 1
-            if not(validity(current_block, grid)) and current_block.row > 0:
-                current_block.row -= 1
-                next_piece = True
-                pygame.time.delay(200)
-            else:
-                score+=1
-
-
-                    
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            
-            if event.type == KEYDOWN:
-                
-                if event.key==K_DOWN: 
-                    information['block_speed']=100
-                
-                elif event.key == K_RIGHT:
-                    current_block.column+=1
-                    if not validity(current_block,grid) or next_piece:
-                        current_block.column-=1
-                
-                elif event.key == K_LEFT:
-                    current_block.column-=1
-                    if not validity(current_block,grid) or next_piece:
-                        current_block.column+=1
-
-                elif event.key == K_UP:
-                    current_block.rotation+=1
-                    if not validity(current_block,grid):
-                        current_block.rotation-=1
-            
-                elif event.key == K_SPACE:
-                    while True:
-                        current_block.row+=1
-                        if not validity(current_block, grid):
-                            current_block.row-=1
-                            break
-                        else:
-                            score +=2
-                elif event.key== K_ESCAPE:
-                    surface.blit(grey,(0,0))
-
-                    font = pygame.font.SysFont('comicsans', 50)
-                    label = font.render('Press Any Key To Continue', 1, (255, 255, 255))
-
-                    surface.blit(label, (information['screen_x'] / 2 - (label.get_width() / 2), information['screen_y']/2))
-                    pygame.display.update()
-                    run=True
-                    while run:
-                        for event in pygame.event.get():
-                            if event.type==QUIT:
-                                pygame.quit()
-                                sys.exit()
-                            if event.type==KEYDOWN:
-                                run=False    
-
-
-
-            
-            if event.type == KEYUP:
-                if event.key==K_DOWN:
-                    information['block_speed']=(0.8-((level-1)*0.007))*1000
-            
-        shape_pos = convert_shape_form(current_block)
-
-        for i in range(len(shape_pos)):
-            if shape_pos[i][1]>-1:
-                grid[shape_pos[i][1]][shape_pos[i][0]]=current_block.color
+        locked_pos={} #fixed blocks, dictionary, (R,G,B)
+        next_piece=False 
+        current_block=get_shape()
+        next_block=get_shape()
         
-        if next_piece:
-            for pos in shape_pos:
-                locked_pos[(pos[0],pos[1])]=current_block.color
-            current_block=next_block
-            next_block=get_shape()
+        clock=pygame.time.Clock()
+        score=0
+        fall_time=0
+        pygame.key.set_repeat(150)
+        level=1
+        cleared=0
 
-            next_piece=False
-            temp_rows=clear_rows(grid,locked_pos)
-            score += score_count(temp_rows, level)
-            cleared+=temp_rows
+        while True:
+            grid=create_grid(locked_pos)
 
-            if cleared>10:
-                cleared-=10
-                level+=1
+            fall_time+=clock.get_rawtime()
+            clock.tick()
 
-        draw_window(surface, grid, score,last_score=top_score(), level=level)
-        pygame.display.update()
-        top_score(score)
-        if lost(locked_pos):
-            break
+            if fall_time > information['block_speed']:
+
+                fall_time = 0
+                current_block.row += 1
+                if not(validity(current_block, grid)) and current_block.row > 0:
+                    current_block.row -= 1
+                    next_piece = True
+                    pygame.time.delay(200)
+                else:
+                    score+=1
+
+
+                        
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                
+                if event.type == KEYDOWN:
+                    
+                    if event.key==K_DOWN: 
+                        information['block_speed']=100
+                    
+                    elif event.key == K_RIGHT:
+                        current_block.column+=1
+                        if not validity(current_block,grid) or next_piece:
+                            current_block.column-=1
+                    
+                    elif event.key == K_LEFT:
+                        current_block.column-=1
+                        if not validity(current_block,grid) or next_piece:
+                            current_block.column+=1
+
+                    elif event.key == K_UP:
+                        current_block.rotation+=1
+                        if not validity(current_block,grid):
+                            current_block.rotation-=1
+                
+                    elif event.key == K_SPACE:
+                        while True:
+                            current_block.row+=1
+                            if not validity(current_block, grid):
+                                current_block.row-=1
+                                break
+                            else:
+                                score +=2
+                    elif event.key== K_ESCAPE:
+                        pause('Press Any Key To Continue',surface)
+
+
+
+                
+                if event.type == KEYUP:
+                    if event.key==K_DOWN:
+                        information['block_speed']=(0.8-((level-1)*0.007))*1000
+                
+            shape_pos = convert_shape_form(current_block)
+
+            for i in range(len(shape_pos)):
+                if shape_pos[i][1]>-1:
+                    grid[shape_pos[i][1]][shape_pos[i][0]]=current_block.color
+            
+            if next_piece:
+                for pos in shape_pos:
+                    locked_pos[(pos[0],pos[1])]=current_block.color
+                current_block=next_block
+                next_block=get_shape()
+
+                next_piece=False
+                temp_rows=clear_rows(grid,locked_pos)
+                score += score_count(temp_rows, level)
+                cleared+=temp_rows
+
+                if cleared>10:
+                    cleared-=10
+                    level+=1
+                if lost(locked_pos):
+                    pause('Game Over',surface)
+                    break
+
+            draw_window(surface, grid, score,last_score=top_score(), level=level)
+            pygame.display.update()
+            top_score(score)
+            
+                
 
 
 
