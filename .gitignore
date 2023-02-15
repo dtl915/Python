@@ -53,3 +53,4 @@ dist.zip
 .gitignore
 help.spec
 graphtheory.py
+dist.zip
